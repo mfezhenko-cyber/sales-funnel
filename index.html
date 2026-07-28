@@ -129,14 +129,17 @@ const REV_N={leads:41,close:37,brand:29,scale:33};
 
 // ---------- helpers ----------
 function q(kicker,title,sub,scr){
+  const multi=!!scr.multi;
   const sel=A[scr.key];
+  const isOn=(v)=> multi ? (Array.isArray(sel)&&sel.includes(v)) : sel===v;
   const opts=scr.choices.map(c=>{
-    const on=sel===c.v;
-    return `<div class="opt ${on?'sel':''}" onclick="choose(this,'${scr.key}','${c.v}')"><div class="tick">✓</div>${c.e?`<div class="emoji">${c.e}</div>`:''}<div>${c.t}</div></div>`;
+    const handler=multi?`chooseMulti(this,'${scr.key}','${c.v}')`:`choose(this,'${scr.key}','${c.v}')`;
+    return `<div class="opt ${isOn(c.v)?'sel':''}" onclick="${handler}"><div class="tick">✓</div>${c.e?`<div class="emoji">${c.e}</div>`:''}<div>${c.t}</div></div>`;
   }).join("");
+  const enabled=multi?(Array.isArray(sel)&&sel.length>0):!!sel;
   return `<div class="fade"><div class="kicker">${kicker}</div><h2>${title}</h2>${sub?`<p class="sub">${sub}</p>`:''}
     <div class="opts">${opts}</div>
-    <button class="btn" id="cont" onclick="next()" ${sel?"":"disabled"}>Continue</button></div>`;
+    <button class="btn" id="cont" onclick="next()" ${enabled?"":"disabled"}>Continue</button></div>`;
 }
 function scaleScreen(scr){
   const sel=A[scr.key];
@@ -152,6 +155,13 @@ function choose(el,key,v){
   const box=el.closest('.opts'); if(box) box.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
   el.classList.add('sel');
   const b=document.getElementById('cont'); if(b) b.disabled=false;
+}
+function chooseMulti(el,key,v){
+  if(!Array.isArray(A[key])) A[key]=[];
+  const i=A[key].indexOf(v);
+  if(i>=0){A[key].splice(i,1);el.classList.remove('sel');}
+  else{A[key].push(v);el.classList.add('sel');}
+  const b=document.getElementById('cont'); if(b) b.disabled=A[key].length===0;
 }
 function chooseScale(el,key,v){
   A[key]=v;
@@ -221,16 +231,26 @@ S.push({render:()=>`<div class="fade" style="text-align:center">
   <p class="sub center">${BN_EMP[A.bottleneck]||BN_EMP.leads}</p>
   <button class="btn" onclick="next()">Continue</button></div>`});
 
+// 6b bright future (Idea C) — multi
+S.push({key:"future",multi:true,choices:[
+  {v:"revenue",t:"Predictable monthly revenue"},
+  {v:"cycle",t:"A shorter sales cycle"},
+  {v:"close",t:"A higher close rate"},
+  {v:"margins",t:"Stronger margins"},
+  {v:"inbound",t:"Inbound leads coming to me"},
+  {v:"selfrun",t:"A team that sells without me"}],
+  render(){return q("What great looks like","When your sales engine finally works — what do you want it to look like?","Pick all that apply.",this)}});
+
 // 7 scale 1
 S.push({key:"scale1",kicker:"How much does this sound like you?",
   statement:"I'm the only one really driving growth in my company",
-  affirm:"That's the #1 growth ceiling for owners. The fix isn't working more — it's getting the right person to own it.",
+  affirm:"Founders who hand growth to a dedicated owner scale 2–3× faster — that's exactly who Intch finds for you.",
   render(){return scaleScreen(this)}});
 
 // 8 scale 2
 S.push({key:"scale2",kicker:"How much does this fit you?",
-  statement:"I'd rather bring in someone who's already solved this in my niche",
-  affirm:"Exactly how Intch works — we match you with people who've fixed this exact problem in businesses like yours.",
+  statement:"I'd rather hire someone who's already solved this in my niche",
+  affirm:"Exactly how Intch works — we match you with people who've solved this exact problem in businesses like yours.",
   render(){return scaleScreen(this)}});
 
 // 9 role (scoring)
@@ -285,8 +305,8 @@ S.push({render:()=>{
   const n=REV_N[A.bottleneck]||35;
   return `<div class="fade" style="text-align:center">
     <div class="center-emoji">🎉</div>
-    <h2 class="center">Your growth plan is ready</h2>
-    <p class="sub center">We mapped your path to <b style="color:#fff">${GOAL_LABEL[A.goal]||"growth"}</b> — and found <span class="rev-num">${n} vetted experts</span> who fixed exactly this in businesses like yours.</p>
+    <h2 class="center">That was your quick diagnosis</h2>
+    <p class="sub center">We mapped your path to <b style="color:#fff">${GOAL_LABEL[A.goal]||"growth"}</b> and found <span class="rev-num">${n} vetted experts</span> who've fixed exactly this. The real work starts on your call.</p>
     <button class="btn" onclick="next()">See my plan</button></div>`;
 }});
 
@@ -314,17 +334,7 @@ S.push({render:()=>{
     <button class="btn" onclick="next()">Continue</button></div>`;
 }});
 
-// 16 email gate
-S.push({render:()=>`<div class="fade">
-  <h2 class="center">Where should we send your growth plan?</h2>
-  <p class="sub center">Drop your details — we'll send the plan and set up your strategy call.</p>
-  <input id="name" placeholder="Your name" value="${A.name||''}" oninput="A.name=this.value;gate()" style="margin-bottom:11px">
-  <input id="email" placeholder="Work email" value="${A.email||''}" oninput="A.email=this.value;gate()">
-  <button class="btn" id="g" onclick="next()" disabled>Continue</button>
-  <div class="foot">🔒 No spam. We never share your email.</div></div>`,
-  onShow:()=>gate()});
-
-// 17 final CTA (segment-based, book a call)
+// final CTA (contacts collected via Calendly — no email gate)
 S.push({render:()=>finalScreen()});
 
 // ---------- scoring ----------
@@ -347,11 +357,17 @@ function leadSegment(){
 }
 function finalScreen(){
   leadSegment(); // всё ещё считаем и логируем score/segment для будущей аналитики — но UI ведём всех на звонок
-  return `<div class="fade" style="text-align:center">
+  return `<div class="fade">
     <div class="center-emoji">📅</div>
-    <h2 class="center">Your growth plan is ready</h2>
-    <p class="sub center">Let's turn it into 2–3 specific people who'll get you to your goal. Book a free strategy call with an Intch expert.</p>
-    <button class="btn" onclick="cta('call')">Book a call</button></div>`;
+    <h2 class="center">The real work starts on your free call</h2>
+    <p class="sub center">You've done the quick diagnosis. Next — a 45-min strategy call where we go deeper and hand you a plan built around your business.</p>
+    <div class="card2"><h4>What happens on the call</h4>
+      <p>• We complete your growth picture — where you are vs where you want to be<br>
+      • We show you exactly how we'd solve it<br>
+      • You leave with a tailored plan and the 2–3 experts who fit — zero obligation</p></div>
+    <p class="sub center" style="margin:14px 0 0">Intch isn't a hiring service — we're growth partners who find your real bottleneck and bring the exact expertise to fix it.</p>
+    <button class="btn" onclick="cta('call')">Book my free strategy call</button>
+    <div class="foot">⭐ 5.0 App Store · trusted by owners in 140+ countries</div></div>`;
 }
 function cta(kind){
   A.cta_clicked=kind;console.log('CTA',kind,'segment',A.leadSegment);
