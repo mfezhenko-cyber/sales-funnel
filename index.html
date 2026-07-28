@@ -85,8 +85,9 @@
   .mile .ic{font-size:20px}
   .fade{animation:fade .45s ease}
   @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  .backlink{position:absolute;top:16px;left:16px;color:var(--muted);cursor:pointer;font-size:20px;z-index:5;user-select:none;opacity:.5}
+  .backlink{color:var(--ink);cursor:pointer;font-size:22px;line-height:1;user-select:none;opacity:.85;padding-right:2px}
   .backlink:hover{opacity:1}
+  .frame.hero .backlink{color:#0A0A0A}
   .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:14px}
   .devnote{max-width:560px;margin:14px auto 0;color:var(--muted);font-size:12px;text-align:center;line-height:1.5}
   svg{display:block;width:100%}
@@ -95,15 +96,14 @@
 <body>
 <div class="app">
   <div class="frame" id="frame">
-    <div class="backlink" id="back" onclick="prev()" style="display:none">←</div>
     <div class="topbar">
+      <div class="backlink" id="back" onclick="prev()" style="visibility:hidden">←</div>
       <div class="logo">Intch<span>.</span></div>
       <div class="prog"><i id="progbar"></i></div>
       <div class="pct" id="pct">0%</div>
     </div>
     <div class="stage" id="stage"></div>
   </div>
-  <div class="devnote">Prototype · B2B Growth funnel v2 · 18 steps. Copy & numbers are placeholders. Debug footer shows lead score/segment.</div>
 </div>
 
 <script>
@@ -346,27 +346,12 @@ function leadSegment(){
   return seg;
 }
 function finalScreen(){
-  const seg=leadSegment();
-  let head,text,cta;
-  if(seg==='A'){
-    head="Your situation deserves a 1-on-1";
-    text="In 45 minutes we'll turn this plan into 2–3 specific people who'll get you to your goal — from our closed base of vetted experts.";
-    cta=`<button class="btn" onclick="cta('call')">Book my free strategy call</button>`;
-  } else if(seg==='B'){
-    head="Let's get you moving";
-    text="Meet the matched experts on the platform, or hop on a short call and we'll walk you through your plan.";
-    cta=`<button class="btn" onclick="cta('call')">Book a strategy call</button><button class="btn ghost" onclick="cta('platform')">Or meet matched experts</button>`;
-  } else {
-    head="Start exploring";
-    text="Browse vetted experts who've solved exactly your bottleneck — on the Intch platform.";
-    cta=`<button class="btn" onclick="cta('platform')">Explore experts</button>`;
-  }
+  leadSegment(); // всё ещё считаем и логируем score/segment для будущей аналитики — но UI ведём всех на звонок
   return `<div class="fade" style="text-align:center">
     <div class="center-emoji">📅</div>
-    <h2 class="center">${head}</h2>
-    <p class="sub center">${text}</p>
-    ${cta}
-    <div class="foot">Segment ${seg} · priority ${A.leadScore}/100 · goal ${GOAL_LABEL[A.goal]||'-'} · focus ${BN_LABEL[A.bottleneck]||'-'}</div></div>`;
+    <h2 class="center">Your growth plan is ready</h2>
+    <p class="sub center">Let's turn it into 2–3 specific people who'll get you to your goal. Book a free strategy call with an Intch expert.</p>
+    <button class="btn" onclick="cta('call')">Book a call</button></div>`;
 }
 function cta(kind){
   A.cta_clicked=kind;console.log('CTA',kind,'segment',A.leadSegment);
@@ -386,7 +371,7 @@ function paint(){
   const hero=!!scr.hero;
   document.getElementById('progbar').style.width=(hero?0:pctv)+"%";
   document.getElementById('pct').textContent=(hero?0:pctv)+"%";
-  document.getElementById('back').style.display=step>0?"block":"none";
+  document.getElementById('back').style.visibility=step>0?"visible":"hidden";
   document.getElementById('frame').classList.toggle('hero',hero);
   if(scr.onShow)scr.onShow();
 }
