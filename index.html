@@ -167,7 +167,8 @@ const GOAL_AFF={
   pipeline:"That's the goal — revenue you can count on every month. It's a system, not luck. Let's map it.",
   markets:"Ambitious — and doable. New markets reward businesses with the right people on the ground. Let's see what you need."
 };
-const GOAL_LABEL={sales:"more sales",marketing:"a steady flow of leads",pipeline:"predictable revenue",markets:"new markets"};
+const GOAL_LABEL={sales:"more sales",marketing:"more leads",pipeline:"predictable revenue",markets:"new markets"};
+const GOAL_3MO={sales:"Closing ~20% more deals from your pipeline",marketing:"~40% increase in new monthly leads",pipeline:"Revenue forecast ~90% accurate",markets:"GTM launched + first 3–5 clients secured"};
 const BN_EMP={
   leads:"We get it. \"Where do I find leads\" is the #1 thing owners tell us — many burn budget for months before it clicks. Last month alone we helped dozens of owners fix their lead flow.",
   close:"We hear this constantly. Leads come in, deals stall — and it quietly kills growth. The good news: it's the most fixable leak of all.",
@@ -177,12 +178,12 @@ const BN_EMP={
 const BN_LABEL={leads:"finding leads",close:"closing deals",brand:"brand awareness",scale:"scaling beyond you"};
 const REV_N={leads:2678,close:2413,brand:2156,scale:2089};
 const VISION_OPTS=[
-  {v:"x2rev",t:"2× revenue in the next 12 months"},
-  {v:"systemic",t:"Systemic sales — get off word-of-mouth"},
-  {v:"markets",t:"New markets (US / EU / MENA)"},
-  {v:"stepout",t:"Step out of day-to-day operations"}];
-const VISION_LABEL={x2rev:"2× revenue",systemic:"Systemic, predictable sales",markets:"Live in new markets",stepout:"Out of day-to-day ops"};
-const BN_NOW={leads:"No steady flow of leads",close:"Deals stall and slip away",brand:"Invisible in your market",scale:"Growth bottlenecked on you"};
+  {v:"g1030",t:"10–30% · Steady growth"},
+  {v:"g3050",t:"30–50% · Strong growth"},
+  {v:"g50100",t:"50–100% · Aggressive growth"},
+  {v:"g100",t:"100%+ (2×) · Hyper-growth"}];
+const VISION_LABEL={g1030:"Steady 10–30% growth achieved",g3050:"Business scaled by 30–50%",g50100:"Rapid scale: 50–100% revenue growth",g100:"100%+ hyper-growth achieved"};
+const BN_NOW={leads:"No predictable lead source",close:"Deals stalling at the finish line",brand:"Low brand awareness",scale:"Growth capped by your time"};
 const FUTURE_LABEL={revenue:"Predictable monthly revenue",cycle:"A shorter sales cycle",close:"A higher close rate",margins:"Stronger margins",inbound:"Inbound leads coming in",selfrun:"Sales running without you"};
 
 // ---------- helpers ----------
@@ -240,9 +241,9 @@ S.push({hero:true,render:()=>q("Growth Diagnostic",
   "Every month without a system, you leave revenue on the table. Let's find where — in 2 minutes.",
   {key:"goal",choices:[
     {v:"sales",t:"Close more sales"},
-    {v:"marketing",t:"Get a steady flow of leads"},
+    {v:"marketing",t:"Get more leads"},
     {v:"pipeline",t:"Make revenue predictable"},
-    {v:"markets",t:"Break into new markets"}]})});
+    {v:"markets",t:"Expand to new markets"}]})});
 
 // 1 affirmation (dynamic by goal)
 S.push({render:()=>`<div class="fade" style="text-align:center">
@@ -325,7 +326,7 @@ S.push({key:"urgency",choices:[
 
 // PEAK question — 12-month vision (last question before results)
 S.push({key:"vision",choices:VISION_OPTS,
-  render(){return q("Your 12-month vision","Where do you want to be in 12 months?","Pick the one that excites you most.",this)}});
+  render(){return q("Your 12-month target","What's your realistic revenue growth target for the next 12 months?","Pick the target that feels right for you.",this)}});
 
 // 12 motivation
 S.push({render:()=>`<div class="fade" style="text-align:center">
@@ -369,12 +370,12 @@ S.push({render:()=>{
 // 15 personal plan / roadmap (mapped from answers)
 S.push({render:()=>{
   const now=BN_NOW[A.bottleneck]||"Growth has stalled";
-  const fut=(Array.isArray(A.future)&&A.future.length)?FUTURE_LABEL[A.future[0]]:"Your sales engine humming";
-  const vis=VISION_LABEL[A.vision]||"Your goal, hit";
+  const threeMo=GOAL_3MO[A.goal]||"Momentum building";
+  const vis=VISION_LABEL[A.vision]||"Your target, hit";
   const rows=[
     {when:"Now",what:now,cls:"start"},
     {when:"In 1 week",what:"Your growth plan &amp; strategy ready",cls:""},
-    {when:"In 3 months",what:fut,cls:""},
+    {when:"In 3 months",what:threeMo,cls:""},
     {when:"In 12 months",what:vis,cls:"goal"}
   ];
   return `<div class="fade">
